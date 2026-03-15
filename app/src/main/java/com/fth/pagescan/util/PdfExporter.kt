@@ -71,43 +71,45 @@ class PdfExporter(private val context: Context) {
                 // 1. Bitmap'i Belleğe Yükle (OutOfMemory önlemi için bounds check yapılabilir ama şimdilik direkt alıyoruz)
                 val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath) ?: continue
 
-                // 2. A4 Kağıdına Resmi Ölçeklendir (Kırpma olmadan sığdır)
-                val scale = Math.min(
-                    A4_WIDTH.toFloat() / bitmap.width,
-                    A4_HEIGHT.toFloat() / bitmap.height
-                )
+                // 2. Yüksek Çözünürlüğü Korumak İçin Dinamik PDF Boyutu
+                // Standart A4 (595x842) yerine sayfa boyutunu resmin kendi piksellerinde ayarlıyoruz.
+                val MAX_DIMENSION = 2500f
+                val originalWidth = bitmap.width.toFloat()
+                val originalHeight = bitmap.height.toFloat()
                 
-                val scaledWidth = (bitmap.width * scale).toInt()
-                val scaledHeight = (bitmap.height * scale).toInt()
+                var scale = 1f
+                if (originalWidth > MAX_DIMENSION || originalHeight > MAX_DIMENSION) {
+                    scale = kotlin.math.min(MAX_DIMENSION / originalWidth, MAX_DIMENSION / originalHeight)
+                }
                 
-                // Resmi ortalamak için margin (Boşluk)
-                val marginLeft = (A4_WIDTH - scaledWidth) / 2
-                val marginTop = (A4_HEIGHT - scaledHeight) / 2
+                val pageWidth = (originalWidth * scale).toInt()
+                val pageHeight = (originalHeight * scale).toInt()
 
                 // 3. PDF Sayfasını Oluştur
-                val pageInfo = PdfDocument.PageInfo.Builder(A4_WIDTH, A4_HEIGHT, index + 1).create()
+                val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, index + 1).create()
                 val pdfPage = pdfDocument.startPage(pageInfo)
                 val canvas = pdfPage.canvas
 
-                // 4. Katman 1 (Alt): Orijinal veya Filtrelenmiş Bitmap'i çiz
-                // Devasa boyuttaki (kamera çözünürlüklü) resimler bazen PDF Canvas'ına çizilemeden siyah kalabiliyor
-                // Çizimden önce resmi A4 boyutuna küçültüp öyle çiziyoruz
-                val scaledDownBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
-                val destRect = Rect(marginLeft, marginTop, marginLeft + scaledWidth, marginTop + scaledHeight)
-                canvas.drawBitmap(scaledDownBitmap, null, destRect, null)
+                // 4. Katman 1 (Alt): Yüksek Çözünürlüklü Resmi Çiz
+                val destRect = Rect(0, 0, pageWidth, pageHeight)
+                
+                if (scale < 1f) {
+                    val scaledDownBitmap = Bitmap.createScaledBitmap(bitmap, pageWidth, pageHeight, true)
+                    canvas.drawBitmap(scaledDownBitmap, null, destRect, null)
+                    scaledDownBitmap.recycle()
+                } else {
+                    canvas.drawBitmap(bitmap, null, destRect, null)
+                }
 
                 // 5. Katman 2 (Üst): "Sandwich" OCR Metni (Şeffaf)
                 val ocrData = ocrResults[page.pageId]
                 if (ocrData != null) {
-                    drawInvisibleOcrText(canvas, ocrData, scale, marginLeft, marginTop)
+                    drawInvisibleOcrText(canvas, ocrData, scale, 0, 0)
                 }
 
                 // 6. Belleği Temizle ve Sayfayı Kapat
                 pdfDocument.finishPage(pdfPage)
                 bitmap.recycle() // OOM'ye karşı en kritik hamle
-                if (scaledDownBitmap != bitmap) {
-                    scaledDownBitmap.recycle()
-                }
             }
 
             // 7. Scoped Storage (MediaStore) ile PDF'i kaydet (Android 10+)
