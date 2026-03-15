@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/schemas/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/libraryFragment">
+
+    <fragment
+        android:id="@+id/libraryFragment"
+        android:name="com.fth.pagescan.ui.library.LibraryFragment"
+        android:label="Library"
+        tools:layout="@layout/fragment_library">
+        <action
+            android:id="@+id/action_libraryFragment_to_cameraFragment"
+            app:destination="@id/cameraFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/cameraFragment"
+        android:name="com.fth.pagescan.ui.camera.CameraFragment"
+        android:label="Camera"
+        tools:layout="@layout/fragment_camera">
+        <action
+            android:id="@+id/action_cameraFragment_to_documentEditFragment"
+            app:destination="@id/documentEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/documentEditFragment"
+        android:name="com.fth.pagescan.ui.edit.DocumentEditFragment"
+        android:label="Edit Document"
+        tools:layout="@layout/fragment_document_edit">
+        <action
+            android:id="@+id/action_documentEditFragment_to_libraryFragment"
+            app:destination="@id/libraryFragment"
+            app:popUpTo="@id/libraryFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+</navigation>
