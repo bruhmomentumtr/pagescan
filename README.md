@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License">
   </a>
   <a href="https://developer.android.com/studio">
-    <img src="https://img.shields.io/badge/Android-10.0%2B-brightgreen.svg" alt="Android Version">
+    <img src="https://img.shields.io/badge/Android-8.0%2B-brightgreen.svg" alt="Android Version">
   </a>
   <a href="https://kotlinlang.org">
     <img src="https://img.shields.io/badge/Kotlin-1.9.0-purple.svg" alt="Kotlin">
